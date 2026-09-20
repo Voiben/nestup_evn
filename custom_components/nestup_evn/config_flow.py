@@ -142,7 +142,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_fulfill_data()
 
-        if evn_info.get("status") is CONF_SUCCESS:
+        if evn_info.get("status") == CONF_SUCCESS:
             self._user_data[CONF_AREA] = evn_info["evn_area"]
 
             return self.async_show_form(
