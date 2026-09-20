@@ -28,6 +28,7 @@ from .const import (
     CONF_DEVICE_NAME,
     CONF_DEVICE_SW_VERSION,
     CONF_ERR_INVALID_AUTH,
+    CONF_ERR_UNKNOWN,
     CONF_MONTHLY_START,
     CONF_PASSWORD,
     CONF_SUCCESS,
@@ -104,13 +105,16 @@ class EVNDevice:
                     self._customer_id,
                 )
 
+                # FIX: login() requires 4 args: evn_area, username, password, customer_id
                 login_state = await self._api.login(
-                    self._area_name, self._username, self._password
+                    self._area_name, self._username, self._password, self._customer_id
                 )
 
                 if login_state == CONF_SUCCESS:
+                    # FIX: request_update() requires username & password as well
                     self._data = await self._api.request_update(
-                        self._area_name, self._customer_id, self._monthly_start
+                        self._area_name, self._username, self._password,
+                        self._customer_id, self._monthly_start
                     )
                     status = self._data.get("status")
 

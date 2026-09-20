@@ -13,6 +13,7 @@ from typing import Any
 from dateutil import parser
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import (
     async_create_clientsession,
     async_get_clientsession,
@@ -1125,7 +1126,9 @@ def generate_datetime(monthly_start=1, offset=0):
     from_date = ""
     time_obj = datetime.now()
 
-    current_day = int(time_obj.strftime("%-d"))
+    # Windows doesn't support %-d/%-m; use cross-platform approach
+    current_day = time_obj.day
+    monthly_start = monthly_start or 1  # Ensure monthly_start is never None
     monthly_start_str = "{:0>2}".format(monthly_start - 1 + offset)
 
     to_date = (time_obj - timedelta(days=1 - offset)).strftime("%d/%m/%Y")
@@ -1136,7 +1139,7 @@ def generate_datetime(monthly_start=1, offset=0):
         from_date = f"{monthly_start_str}/{time_obj.strftime('%m/%Y')}"
 
     else:
-        last_month = int(time_obj.strftime("%-m")) - 1
+        last_month = time_obj.month - 1
 
         # If current month >= 2
         if last_month:
@@ -1148,7 +1151,7 @@ def generate_datetime(monthly_start=1, offset=0):
         # If current month == 1
         #   last_month must be 12 and change Year to Last Year
         else:
-            last_year = int(time_obj.strftime("%Y")) - 1
+            last_year = time_obj.year - 1
             from_date = f"{monthly_start_str}/12/{last_year}"
 
     return from_date, to_date
@@ -1258,6 +1261,6 @@ def get_evn_info_sync(customer_id: str, branches_data=None):
 
     return {"status": CONF_ERR_NOT_SUPPORTED}
 
-async def get_evn_info(hass: HomeAssistant, customer_id: str):
-    """Async wrapper for EVN info"""
+async def async_get_evn_info(hass: HomeAssistant, customer_id: str):
+    """Async wrapper for EVN info (use this from async context instead of get_evn_info_sync)."""
     return await hass.async_add_executor_job(get_evn_info_sync, customer_id)
